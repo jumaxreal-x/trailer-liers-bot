@@ -2,20 +2,19 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import baileys from '@whiskeysockets/baileys';
 import pino from 'pino';
 import { Boom } from '@hapi/boom';
 import { config } from './config.js';
 
-const {
+import {
   makeWASocket,
   useMultiAuthState,
   fetchLatestBaileysVersion,
   Browsers,
   DisconnectReason,
   makeCacheableSignalKeyStore,
-} = baileys;
-const _makeSock = baileys.default || makeWASocket;
+} from '@whiskeysockets/baileys'
+const _makeSock = makeWASocket
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
