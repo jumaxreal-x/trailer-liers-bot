@@ -53,6 +53,7 @@ router.get("/", (_req, res) => {
 <meta charset="utf-8" />
 <title>${BOT_NAME} — Link your WhatsApp</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
+<base href="/api/wa/" />
 <style>
   *{box-sizing:border-box}
   body{font-family:system-ui,-apple-system,sans-serif;background:linear-gradient(180deg,#0b141a,#06090c);color:#e9edef;margin:0;min-height:100vh;padding:24px;display:flex;align-items:center;justify-content:center;}
