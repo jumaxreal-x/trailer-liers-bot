@@ -1,8 +1,0 @@
-[phases.setup]
-nixPkgs = ["nodejs_20", "ffmpeg", "vips"]
-
-[phases.install]
-cmds = ["npm install --omit=optional --no-audit --no-fund --loglevel=error"]
-
-[start]
-cmd = "node bot.js"
