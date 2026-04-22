@@ -2,15 +2,15 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# install pnpm
-RUN npm i -g pnpm@10
-
-# copy lockfile + manifest first for caching
+# copy manifest first for caching
 COPY package.json ./
-RUN pnpm install --prod --no-frozen-lockfile
 
-# copy source
+# install with npm (no lockfile needed; baileys deps work fine)
+RUN npm install --omit=dev --no-audit --no-fund
+
+# copy source + config
 COPY src ./src
+COPY railway.json* ./
 
 ENV PORT=8080
 EXPOSE 8080

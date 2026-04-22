@@ -1,5 +1,5 @@
 {
-  "name": "@workspace/bot",
+  "name": "trailer-liers-bot",
   "version": "1.0.0",
   "private": true,
   "type": "module",
