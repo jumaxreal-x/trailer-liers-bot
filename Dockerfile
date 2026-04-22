@@ -2,10 +2,12 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# baileys pulls some deps from git + builds native modules
+RUN apk add --no-cache git python3 make g++
+
 # copy manifest first for caching
 COPY package.json ./
 
-# install with npm (no lockfile needed; baileys deps work fine)
 RUN npm install --omit=dev --no-audit --no-fund
 
 # copy source + config
