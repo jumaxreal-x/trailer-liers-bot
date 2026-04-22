@@ -1,0 +1,17 @@
+{
+  "name": "@workspace/bot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/web.js",
+    "bot": "node src/index.js",
+    "dev": "node src/web.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.18",
+    "@hapi/boom": "^10.0.1",
+    "express": "^4.21.2",
+    "pino": "^9.5.0"
+  }
+}
