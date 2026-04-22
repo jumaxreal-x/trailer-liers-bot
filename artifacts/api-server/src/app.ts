@@ -31,4 +31,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
 
+// Convenience: redirect root to the WhatsApp linking page
+app.get("/", (_req, res) => res.redirect("/api/wa"));
+
 export default app;
