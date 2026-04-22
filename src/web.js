@@ -46,7 +46,7 @@ async function startPairSession(phone) {
         logger,
         auth: { creds: state.creds, keys: makeCacheableSignalKeyStore(state.keys, logger) },
         printQRInTerminal: false,
-        browser: Browsers.ubuntu('Chrome'),
+        browser: Browsers.android('Chrome'),
         markOnlineOnConnect: false,
       });
       session.sock = sock;
