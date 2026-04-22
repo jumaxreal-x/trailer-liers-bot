@@ -53,20 +53,33 @@ async function startPairSession(phone) {
       session.sock = sock;
       sock.ev.on('creds.update', saveCreds);
 
-      // request pair code shortly after socket comes up
-      setTimeout(async () => {
+      let codeRequested = false;
+      const tryRequestCode = async () => {
+        if (codeRequested) return;
+        if (sock.authState.creds.registered) return;
+        codeRequested = true;
+        // small delay to let the noise handshake complete
+        await new Promise(r => setTimeout(r, 3000));
         try {
-          if (sock.authState.creds.registered) return;
           const code = await sock.requestPairingCode(phone);
           session.code = code?.match(/.{1,4}/g)?.join('-') || code;
+          console.log('[pair]', session.id, 'code generated for', phone);
         } catch (e) {
-          session.error = 'Failed to get pair code: ' + e.message;
+          console.error('[pair]', session.id, 'requestPairingCode failed:', e.message);
+          session.error = 'Failed to get pair code: ' + e.message + '. Try again.';
           session.status = 'failed';
         }
-      }, 1500);
+      };
 
+      // hard fallback: if no event triggers in 8s, force a request anyway
+      setTimeout(tryRequestCode, 8000);
+
+      // request as soon as the socket reports any 'connecting' update with qr potential
       sock.ev.on('connection.update', async (u) => {
-        const { connection, lastDisconnect } = u;
+        const { connection, lastDisconnect, qr } = u;
+        if ((qr || connection === 'connecting') && !codeRequested) {
+          tryRequestCode();
+        }
         if (connection === 'open') {
           // export creds.json as base64 SESSION_ID
           try {
