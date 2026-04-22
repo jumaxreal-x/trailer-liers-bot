@@ -8,7 +8,7 @@ import { config } from './config.js';
 
 import {
   makeWASocket,
-  useMultiAuthState,
+  useMultiFileAuthState,
   fetchLatestBaileysVersion,
   Browsers,
   DisconnectReason,
@@ -39,7 +39,7 @@ async function startPairSession(phone) {
 
   (async () => {
     try {
-      const { state, saveCreds } = await useMultiAuthState('./session')
+      const { state, saveCreds } = await useMultiFileAuthState(dir)
       const { version } = await fetchLatestBaileysVersion();
       const sock = _makeSock({
         version,
