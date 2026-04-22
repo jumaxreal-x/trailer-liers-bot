@@ -1,0 +1,14 @@
+node_modules
+**/node_modules
+**/dist
+**/.cache
+**/.turbo
+.git
+.local
+.replit
+replit.nix
+artifacts/api-server/.wa-state
+artifacts/mockup-sandbox
+**/*.log
+.env
+.env.*
