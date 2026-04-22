@@ -1,6 +1,6 @@
 export const config = {
   BOT_NAME: 'TRAILER LIERS',
-  OWNER_NUMBER: '256706106326',
+  OWNER_NUMBER: '256752233886',
   PREFIXES: ['😀', '.', '!'],
   TIME_ZONE: 'Africa/Kampala',
   SESSION_ID: process.env.SESSION_ID || '',
