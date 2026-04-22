@@ -16,6 +16,9 @@ const defaults = {
   autoreact: false,
   autostatus: false,
   autoAiReply: false,
+  aiMode: 'off',             // off | on (gemini) | mimic (replays your past style)
+  aiHistory: {},             // jid -> [{role, text}]
+  antiedit: false,           // notify owner when someone edits a message
   anticall: false,
   antidelete: false,
   pmblocker: false,

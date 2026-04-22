@@ -8,6 +8,7 @@ import { registerRent } from './rent.js';
 import { registerGit } from './git.js';
 import { registerSession } from './session_cmds.js';
 import { registerBroadcast } from './broadcast.js';
+import { registerAi } from './ai.js';
 
 export const commands = new Map(); // name -> {handler, desc, owner, group}
 
@@ -28,6 +29,7 @@ export function loadAllCommands() {
   registerGit(register);
   registerSession(register);
   registerBroadcast(register);
+  registerAi(register);
 }
 
 export function listCommands() {

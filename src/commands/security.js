@@ -24,4 +24,10 @@ export function registerSecurity(register) {
     setState({ stealth: !cur });
     await ctx.reply(`stealth: *${!cur ? 'ON' : 'OFF'}*`);
   });
+
+  register('antiedit', { desc: 'Notify owner when someone edits a message', group: 'security', owner: true }, async (ctx) => {
+    const cur = !!getState().antiedit;
+    setState({ antiedit: !cur });
+    await ctx.reply(`antiedit: *${!cur ? 'ON' : 'OFF'}*`);
+  });
 }

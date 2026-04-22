@@ -11,7 +11,7 @@ export function registerCore(register) {
     for (const c of cmds) (groups[(c.group || 'misc').toLowerCase()] ||= []).push(c.name);
 
     const order = [
-      'core', 'auto', 'security', 'replies', 'plugins',
+      'core', 'ai', 'auto', 'security', 'replies', 'plugins',
       'rent', 'broadcast', 'chat', 'session', 'git', 'misc',
     ];
     const ordered = [

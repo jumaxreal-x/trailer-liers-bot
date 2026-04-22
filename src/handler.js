@@ -1,7 +1,8 @@
 import { commands } from './commands/index.js';
-import { config } from './config.js';
+import { config, ownerJid } from './config.js';
 import { getState, setState } from './state.js';
 import { parseCmd, extractText, senderJid, isOwner, isSudo, isGroup, normalizeJid } from './utils.js';
+import { aiGenerate, pushHistory } from './ai.js';
 
 export function buildHandler(sock) {
   return async ({ messages, type }) => {
@@ -26,6 +27,23 @@ async function handleOne(sock, msg) {
   const text = extractText(msg);
   const sender = senderJid(msg);
   const fromMe = !!msg.key.fromMe;
+
+  // edit detection — protocolMessage type 14 = MESSAGE_EDIT
+  const proto = msg.message?.protocolMessage;
+  if (proto && (proto.type === 14 || proto.type === 'MESSAGE_EDIT')) {
+    if (state.antiedit && !fromMe) {
+      const editedKey = proto.key?.id;
+      const oldCached = editedKey ? state.messageCache?.[editedKey] : null;
+      const newText = extractText({ message: proto.editedMessage }) || '(non-text edit)';
+      const old = oldCached?.text || '(original not cached)';
+      try {
+        await sock.sendMessage(ownerJid(), {
+          text: `✏️ *Edited message detected*\nFrom: ${from}\nSender: ${sender}\n\n*Before:* ${old}\n*After:* ${newText}`,
+        });
+      } catch {}
+    }
+    return;
+  }
 
   // status broadcast handling
   if (from === 'status@broadcast') {
@@ -70,14 +88,25 @@ async function handleOne(sock, msg) {
     }
   }
 
+  // record conversation history for AI (DM only, text only)
+  if (text && !isGroup(from)) {
+    pushHistory(from, fromMe ? 'me' : 'them', text);
+  }
+
   // command parsing
   const parsed = parseCmd(text);
   if (!parsed) {
-    // auto AI reply (no LLM key configured = canned witty reply)
-    if (state.autoAiReply && !fromMe && !isGroup(from)) {
+    // AI auto-reply when .aion or .aimimic is on (DM only)
+    if (!fromMe && !isGroup(from) && (state.aiMode === 'on' || state.aiMode === 'mimic')) {
       try {
-        await sock.sendMessage(from, { text: aiReply(text) }, { quoted: msg });
-      } catch {}
+        const reply = await aiGenerate(from, text);
+        if (reply) {
+          await sock.sendMessage(from, { text: reply }, { quoted: msg });
+          pushHistory(from, 'me', reply);
+        }
+      } catch (e) {
+        console.error('ai reply error:', e?.message);
+      }
     }
     return;
   }
@@ -151,11 +180,3 @@ function buildCtx(sock, msg, parsed, from, sender) {
   };
 }
 
-function aiReply(text) {
-  const canned = [
-    "I'm here, but my AI brain isn't wired in. Try a command — type .help",
-    "Owner hasn't plugged the AI in yet. But I'm listening.",
-    `You said: "${text}". Cool. Type .help to see what I can actually do.`,
-  ];
-  return canned[Math.floor(Math.random() * canned.length)];
-}
