@@ -261,14 +261,25 @@ async function start(): Promise<void> {
       connectionState = "closed";
       const code = (lastDisconnect?.error as Boom | undefined)?.output?.statusCode;
       const loggedOut = code === DisconnectReason.loggedOut;
-      logger.warn({ code, loggedOut }, "connection closed");
+      const wasRegistered = sock?.authState.creds.registered ?? false;
+      logger.warn({ code, loggedOut, wasRegistered }, "connection closed");
       if (loggedOut) {
         try {
           fs.rmSync(AUTH_DIR, { recursive: true, force: true });
           logger.warn("cleared stale auth — re-link the bot");
         } catch {/* ignore */}
+        setTimeout(() => void start(), 3000);
+        return;
       }
-      setTimeout(() => void start(), 3000);
+      // If we are not yet registered AND we already have an outstanding pairing code,
+      // delay reconnect by 90s so the user can finish entering the code without it being
+      // invalidated by a fresh requestPairingCode call.
+      if (!wasRegistered && pairingCode) {
+        logger.warn("close before pair completed — waiting 90s before retry to preserve pairing code");
+        setTimeout(() => void start(), 90_000);
+      } else {
+        setTimeout(() => void start(), 3000);
+      }
     }
   });
 
