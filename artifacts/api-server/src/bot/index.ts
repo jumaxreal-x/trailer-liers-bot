@@ -7,6 +7,7 @@ import {
   fetchLatestBaileysVersion,
   DisconnectReason,
   jidNormalizedUser,
+  Browsers,
   type WASocket,
   type proto,
 } from "@whiskeysockets/baileys";
@@ -204,9 +205,10 @@ async function start(): Promise<void> {
     auth: authState,
     printQRInTerminal: false,
     logger: logger.child({ scope: "baileys" }) as never,
-    browser: [BOT_NAME, "Chrome", "1.0.0"],
+    browser: Browsers.ubuntu("Chrome"),
     syncFullHistory: false,
-    markOnlineOnConnect: true,
+    markOnlineOnConnect: false,
+    generateHighQualityLinkPreview: true,
   });
 
   sock.ev.on("creds.update", saveCreds);
