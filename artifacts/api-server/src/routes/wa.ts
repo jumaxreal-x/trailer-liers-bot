@@ -137,6 +137,7 @@ function fmtCode(c) {
   return c.length === 8 ? c.slice(0,4) + "-" + c.slice(4) : c;
 }
 
+let lastShownCode = "";
 async function refreshStatus() {
   try {
     const r = await fetch("status").then(r => r.json());
@@ -144,8 +145,14 @@ async function refreshStatus() {
     statusEl.className = "pill " + r.state;
     userEl.textContent = r.user ? "(" + r.user + ")" : "";
     if (r.state === "open") {
-      result.innerHTML = '<div style="color:#25d366;font-weight:600">✓ Linked successfully</div><small>You can close this page. Send <b>.menu</b> to the bot to see commands.</small>';
+      result.innerHTML = '<div style="color:#25d366;font-weight:600;font-size:18px">✓ Linked successfully</div><small>You can close this page. Send <b>.menu</b> to the bot to see commands.</small>';
       btnPair.disabled = true; btnQR.disabled = true;
+      return;
+    }
+    // Auto-display the bot's auto-generated pairing code if available and not already shown
+    if (r.pairingCode && r.pairingCode !== lastShownCode && !result.dataset.userAction) {
+      lastShownCode = r.pairingCode;
+      result.innerHTML = '<div><small>Pairing code for the bot owner number</small></div><div class="code">' + fmtCode(r.pairingCode) + '</div><small>Open WhatsApp on +' + (r.owner || '') + ', go to Linked Devices → Link a device → Link with phone number, and enter this code within ~60s.</small>';
     }
   } catch {}
 }
@@ -153,19 +160,26 @@ async function refreshStatus() {
 btnPair.onclick = async () => {
   const phone = phoneInput.value.replace(/\\D/g, "");
   if (phone.length < 8) { result.innerHTML = '<span class="err">Enter a valid phone number with country code.</span>'; return; }
+  result.dataset.userAction = "1";
   btnPair.disabled = true; btnPair.textContent = "Requesting…";
-  result.innerHTML = '<small>Asking WhatsApp for a code…</small>';
+  result.innerHTML = '<small>Asking WhatsApp for a code… (this can take 10-20s)</small>';
   try {
-    const r = await fetch("pair", { method: "POST", headers: {"content-type":"application/json"}, body: JSON.stringify({ phone }) }).then(r => r.json());
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 30000);
+    const resp = await fetch("pair", { method: "POST", headers: {"content-type":"application/json"}, body: JSON.stringify({ phone }), signal: ctrl.signal });
+    clearTimeout(t);
+    const r = await resp.json();
     if (r.code) {
+      lastShownCode = r.code;
       result.innerHTML = '<div><small>Pairing code for +' + phone + '</small></div><div class="code">' + fmtCode(r.code) + '</div><small>Enter this in WhatsApp within 60 seconds.</small>';
     } else {
       result.innerHTML = '<span class="err">' + (r.error || "Failed") + '</span>';
     }
   } catch (e) {
-    result.innerHTML = '<span class="err">' + e.message + '</span>';
+    result.innerHTML = '<span class="err">Network error: ' + (e.message || e) + '. The bot may still be connecting — wait for status to be CONNECTING then try again, or use QR.</span>';
   } finally {
     btnPair.disabled = false; btnPair.textContent = "Get pairing code";
+    setTimeout(() => { delete result.dataset.userAction; }, 8000);
   }
 };
 
