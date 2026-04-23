@@ -31,6 +31,18 @@ router.get("/status", (_req, res) => {
   });
 });
 
+router.post("/reset", async (_req, res) => {
+  try {
+    const authDir = path.resolve(process.cwd(), ".wa-state", "auth");
+    fs.rmSync(authDir, { recursive: true, force: true });
+    res.json({ ok: true, message: "auth wiped, bot will restart with fresh state" });
+    // hard-restart the process so a clean Baileys socket is created
+    setTimeout(() => process.exit(0), 250);
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message });
+  }
+});
+
 router.post("/pair", async (req, res) => {
   try {
     const phone = String(req.body?.phone ?? "");
@@ -108,6 +120,9 @@ router.get("/", (_req, res) => {
     <button id="btnPair">Get pairing code</button>
     <button id="btnQR" class="alt">Show QR code</button>
   </div>
+  <div style="margin-top:10px;text-align:center;">
+    <button id="btnReset" class="alt" style="font-size:13px;padding:8px 14px;">⟲ Reset session (clear auth & restart)</button>
+  </div>
 
   <div class="result" id="result">
     <small>Enter your number, then choose a method.</small>
@@ -130,6 +145,20 @@ const statusEl = $("status");
 const userEl = $("user");
 const btnPair = $("btnPair");
 const btnQR = $("btnQR");
+const btnReset = $("btnReset");
+
+btnReset.onclick = async () => {
+  if (!confirm("Wipe the saved WhatsApp session and restart? You will need to re-link.")) return;
+  btnReset.disabled = true; btnReset.textContent = "Resetting…";
+  result.dataset.userAction = "1"; lastShownCode = "";
+  try {
+    await fetch("reset", { method: "POST" });
+    result.innerHTML = '<small>Session wiped. The bot is restarting — wait ~15 seconds for a fresh code to appear automatically.</small>';
+  } catch {
+    result.innerHTML = '<small>Reset signal sent. The bot is restarting — wait ~15 seconds.</small>';
+  }
+  setTimeout(() => { delete result.dataset.userAction; btnReset.disabled = false; btnReset.textContent = "⟲ Reset session (clear auth & restart)"; }, 20000);
+};
 const phoneInput = $("phone");
 
 function fmtCode(c) {
