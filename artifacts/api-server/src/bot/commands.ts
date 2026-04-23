@@ -1118,6 +1118,10 @@ export async function dispatch(
   const jid = msg.key!.remoteJid!;
   const sender = msg.key!.participant ?? msg.key!.remoteJid!;
   const isGroupChat = isGroup(jid);
+  // Treat fromMe (messages from the linked owner account itself) as owner —
+  // WhatsApp's new @lid identifiers can make jid-based owner checks fail.
+  const fromMe = msg.key?.fromMe ?? false;
+  const ownerCheck = (s: string) => fromMe || isOwner(s);
 
   let groupMeta: GroupMetadata | undefined;
   let isAdmin = false;
@@ -1138,7 +1142,7 @@ export async function dispatch(
     }
   }
 
-  if (def.ownerOnly && !isOwner(sender)) {
+  if (def.ownerOnly && !ownerCheck(sender)) {
     await reply(sock, msg, "Owner only.");
     return true;
   }
@@ -1146,7 +1150,7 @@ export async function dispatch(
     await reply(sock, msg, "Group only.");
     return true;
   }
-  if (def.adminOnly && !isAdmin && !isOwner(sender)) {
+  if (def.adminOnly && !isAdmin && !ownerCheck(sender)) {
     await reply(sock, msg, "Admin only.");
     return true;
   }
@@ -1156,7 +1160,7 @@ export async function dispatch(
   }
 
   const state = getState();
-  if (state.mode === "private" && !isOwner(sender)) return true;
+  if (state.mode === "private" && !ownerCheck(sender)) return true;
 
   try {
     await def.handler({
